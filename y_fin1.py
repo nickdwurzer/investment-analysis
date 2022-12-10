@@ -5,10 +5,16 @@ import sqlalchemy as sqla
 import add_moving_average as ama
 
 def main():
-	eng = sqla.create_engine("sqlite:////Users/nicholaswurzer/finance/yahoo_fin/historical_price.db", echo = False)
-	ma = ama.moving_average(eng, 'AAPL')
-	ma.create_moving_average()
-	ma.create_rolling_average()
+	eng = sqla.create_engine("sqlite:////Users/nicholaswurzer/finance/investment-analysis/historical_price.db", echo = False)
+	
+	sp500_tickers = si.tickers_sp500()
+	for i in sp500_tickers:
+		print(i)
+		ma = ama.moving_average(eng, i)
+	#ma.create_moving_average()
+		MA_200 = ma.create_rolling_average(360)
+		MA_50 = ma.create_rolling_average(300)
+		ma.get_buy_sell_signals(MA_50, MA_200)
 	#db_to_csv("/Users/nicholaswurzer/finance/yahoo_fin/historical_price.db", "/Users/nicholaswurzer/finance/csv/")
 	#dow_tickers = si.tickers_dow()
 	#nasdaq_tickers = si.tickers_nasdaq()

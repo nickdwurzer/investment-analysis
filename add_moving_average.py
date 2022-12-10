@@ -18,14 +18,41 @@ class moving_average:
 			sqla.Column("volume", sqla.BigInteger),
 			sqla.Column("ticker", sqla.String(20)))
 		s = sqla.select(meta_table.c.index, meta_table.c.close)
-		self.better_result = pd.read_sql(s, db_conn, "index")
-		self.result = db_conn.execute(s).fetchall()
-		self.first_index = self.result[0][0]
-		self.last_index = self.result[len(self.result)-1][0]
+		self.result = pd.read_sql(s, db_conn, "index")
+		self.old_result = db_conn.execute(s).fetchall()
+		self.first_index = self.result.index[0]
+		self.last_index = self.result.index[len(self.result)-1]
+		
+		print(self.first_index, self.last_index)
 
-	def create_rolling_average(self):
-		print(self.better_result.rolling("210D").mean())
-		print(self.better_result)
+	def get_buy_sell_signals(self, short_MA, long_MA):
+		buy = False
+		sell = False
+		profit_list = []
+		time_period_list = []
+		for i in range(1, len(short_MA)):
+			if((short_MA.iat[i-1, 0] < long_MA.iat[i-1, 0]) and (short_MA.iat[i, 0] > long_MA.iat[i, 0])):
+				#print(short_MA.iat[i-1, 0], long_MA.iat[i-1, 0], short_MA.iat[i, 0], long_MA.iat[i, 0], i)
+				buy_price = self.result.iat[i, 0]
+				buy_index = i
+				buy = True
+			if((short_MA.iat[i-1, 0] > long_MA.iat[i-1, 0]) and (short_MA.iat[i, 0] < long_MA.iat[i, 0]) and buy):
+				sell_price = self.result.iat[i, 0]
+				sell_index = i
+				sell = True
+			if(buy and sell):
+				buy = False
+				sell = False
+				profit = (sell_price - buy_price)/buy_price*100
+				time_period = sell_index - buy_index
+				profit_list.append(profit)
+				time_period_list.append(time_period)
+				print("profit = "+ str(profit) + "% over " + str(time_period) + "days")
+
+		print("average_profit = " + str(sum(profit_list)/len(profit_list)) + " average time period = " + str(sum(time_period_list)/len(time_period_list)))
+
+	def create_rolling_average(self, window):
+		return self.result.rolling(str(window) +"D").mean()
 
 	def compute_average(q):
 		total = 0
@@ -35,6 +62,7 @@ class moving_average:
 			q.append(next_item)
 		return total/len(q)
 
+	#deprecated since disvoery of rolling() method
 	def create_moving_average(self):
 		#create a list of days to iterate through
 		tdelta_1d = dt.timedelta(days = 1)
