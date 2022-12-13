@@ -8,13 +8,19 @@ def main():
 	eng = sqla.create_engine("sqlite:////Users/nicholaswurzer/finance/investment-analysis/historical_price.db", echo = False)
 	
 	sp500_tickers = si.tickers_sp500()
+	profit_percentages_and_time_periods = []
+	profit_percentages = []
+	time_periods = []
 	for i in sp500_tickers:
 		print(i)
 		ma = ama.moving_average(eng, i)
 	#ma.create_moving_average()
 		MA_200 = ma.create_rolling_average(360)
 		MA_50 = ma.create_rolling_average(300)
-		ma.get_buy_sell_signals(MA_50, MA_200)
+		profit_percentages_and_time_periods = ma.get_buy_sell_signals(MA_50, MA_200)
+		profit_percentages += profit_percentages_and_time_periods[0] 
+		time_periods +=  profit_percentages_and_time_periods[1]
+	print("The average profit for companies in the sp500 is: " + str(sum(profit_percentages)/len(profit_percentages)) + " The average time period is: " + str(sum(time_periods)/len(time_periods)))
 	#db_to_csv("/Users/nicholaswurzer/finance/yahoo_fin/historical_price.db", "/Users/nicholaswurzer/finance/csv/")
 	#dow_tickers = si.tickers_dow()
 	#nasdaq_tickers = si.tickers_nasdaq()
