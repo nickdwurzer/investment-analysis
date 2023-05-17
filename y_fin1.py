@@ -15,8 +15,8 @@ def main():
 		print(i)
 		ma = ama.moving_average(eng, i)
 	#ma.create_moving_average()
-		MA_200 = ma.create_rolling_average(360)
-		MA_50 = ma.create_rolling_average(300)
+		MA_200 = ma.create_rolling_average(50)
+		MA_50 = ma.create_rolling_average(200)
 		profit_percentages_and_time_periods = ma.get_buy_sell_signals(MA_50, MA_200)
 		profit_percentages += profit_percentages_and_time_periods[0] 
 		time_periods +=  profit_percentages_and_time_periods[1]

@@ -47,7 +47,7 @@ class moving_average:
 				time_period = sell_index - buy_index
 				profit_list.append(profit)
 				time_period_list.append(time_period)
-				#print("profit = "+ str(profit) + "% over " + str(time_period) + "days")
+				print("profit = "+ str(profit) + "% over " + str(time_period) + "days")
 
 		#print("average_profit = " + str(sum(profit_list)/len(profit_list)) + " average time period = " + str(sum(time_period_list)/len(time_period_list)))
 		return [profit_list, time_period_list]
