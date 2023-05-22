@@ -1,2 +1,4 @@
 historical_price.db
 __pycache__/
+.DS_Store
+venv/
