@@ -1,7 +1,7 @@
 #!./venv/bin/python
 import yahoo_fin.stock_info as si
 import pandas as pd
-import datetime as dt
+from datetime import datetime as dt
 import sqlite3 as sql3
 
 #retuns the last trading day in the database for a company.
@@ -13,7 +13,7 @@ def get_last_trade_day(database, ticker):
     conn.close()
     return date
 
-def update_all():
+def update_all(database):
     dow_tickers = si.tickers_dow()
     nasdaq_tickers = si.tickers_nasdaq()
     sp500_tickers = si.tickers_sp500()
@@ -24,41 +24,32 @@ def update_all():
     niftybank_tickers = si.tickers_niftybank()
     other_tickers = si.tickers_other()
     tickers = dow_tickers + nasdaq_tickers + sp500_tickers + nifty50_tickers + niftybank_tickers + other_tickers
-    for ticker in tickers:
-        update_table(ticker)
+    for i in range(len(tickers)):
+        if i % 10 == 0:
+            print(f"Updated {i} of {len(tickers)} stocks.")
+        update_table(database, tickers[i])
 
 def update_table(database, ticker):
     last_trade_day = get_last_trade_day("historical_price.db", ticker)
     # Format date and add one day so that there is no overlap
-    last_trade_day = last_trade_day[:4]+"/"+last_trade_day[5:7]+"/"+str(int(last_trade_day[8:10])+1)
+    last_trade_day_si = last_trade_day[:4]+"/"+last_trade_day[5:7]+"/"+str(int(last_trade_day[8:10])+1)
+    last_trade_day = dt.fromisoformat(str(last_trade_day))
     try:
-        data = si.get_data(ticker, start_date=last_trade_day)
-        conn = sql3.connect(database)
-        data.to_sql(ticker, conn, if_exists='append')
-        conn.close()
+        data = si.get_data(ticker, start_date=last_trade_day_si)
+        retrieved_date = str(data.iloc[0].name)
+        retrieved_date = dt.fromisoformat(retrieved_date)
+        if retrieved_date > last_trade_day:
+            conn = sql3.connect(database)
+            data.to_sql(ticker, conn, if_exists='append')
+            conn.close()
+        else:
+            print("Incorrect start date of reteived data.")
     except AssertionError:
         print("Error retrieving data for ticker " + ticker)
 
 #remember that a comapanies very first trading day is the first entity in the table
 def main():
-    #update_all()
-    # update_table("historical_price.db", si.tickers_dow()[0])
-    # conn = sql3.connect("historical_price.db")
-    # cursor = conn.cursor()
-    # result = cursor.execute('SELECT * FROM ' + si.tickers_dow()[0] + ' ORDER BY "index"')
-    # print(result.fetchall())
-    # conn.close()
-    #TODO remove last 10 rows of 'AAPL' ticker, update was incorrect.
-    #TODO convert retrieved_date and last_trade_day to a datetime and compare them.
-    #TODO only update table if retrieved_date >= last_trade_date
-    #This is because get_data can return data before start_date
-    last_trade_day = get_last_trade_day("historical_price.db", 'AAPL')
-    last_trade_day = last_trade_day[:4]+"/"+last_trade_day[5:7]+"/"+str(int(last_trade_day[8:10])+1)
-    data = si.get_data("AAPL", start_date=last_trade_day)
-    print(last_trade_day)
-    retrieved_date = str(data.iloc[0].name)
-    retrieved_date = retrieved_date[:4]+"/"+retrieved_date[5:7]+"/"+retrieved_date[8:10]
-    print(retrieved_date)
+    update_all("historical_price.db")
 
 if __name__ == "__main__":
     main()
